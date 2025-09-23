@@ -1,0 +1,15 @@
+# Ignorar virtual envs
+venv/
+venv_faces/
+.env/
+
+# Ignorar arquivos grandes gerados
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.dll
+*.so
+*.dylib
+*.log
+*.sqlite3
