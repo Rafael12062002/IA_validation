@@ -1,15 +1,34 @@
-# Ignorar virtual envs
+# Ignorar ambientes virtuais
+.venv/
 venv/
 venv_faces/
-.env/
+.env
 
-# Ignorar arquivos grandes gerados
+# Ignorar cache e configs locais
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.DS_Store
+
+# Ignorar arquivos grandes de libs
 *.dll
 *.so
 *.dylib
+*.pyd
+
+# Ignorar saídas temporárias
 *.log
-*.sqlite3
+*.tmp
+*.swp
+
+# Ignorar datasets, PDFs e imagens de teste
+*.pdf
+*.jpg
+*.jpeg
+*.png
+
+# Ignorar dependências instaladas
+*.egg-info/
+dist/
+build/
