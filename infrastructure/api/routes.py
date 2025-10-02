@@ -5,6 +5,8 @@ import io
 import os
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
+import zipfile
+import base64
 from application.selecionar_melhor_rosto_usecase import SelecionarMelhorRostoUseCase
 from application.converter_pdf_usecase import ConverterPDFUseCase
 from application.comparar_documento_usecase import CompararDocumentoUseCase
@@ -32,21 +34,35 @@ async def extrair_melhor_rosto(file: UploadFile = File(...), step_degrees: int =
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img is None:
         raise HTTPException(status_code=400, detail="Imagem inválida")
-    # cria o use_case com step_degrees escolhido
+
     use_case = SelecionarMelhorRostoUseCase(detector, alinhador, step_degrees=step_degrees)
-    
-    result = use_case.executar(img)
-    if result is None:
+    melhor_img, todos_os_rostos = use_case.executar(img)
+
+    if melhor_img is None:
         raise HTTPException(status_code=404, detail="Nenhum rosto encontrado")
 
-    melhor_img = result  # agora só recebe a imagem
+    # Criar buffer de memória para o ZIP
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        # Adiciona a melhor imagem
+        ok, encoded = cv2.imencode(".jpg", melhor_img)
+        if not ok:
+            raise HTTPException(status_code=500, detail="Falha ao codificar melhor imagem")
+        zip_file.writestr("melhor_rosto.jpg", encoded.tobytes())
 
-    ok, encoded = cv2.imencode(".jpg", melhor_img)
-    if not ok:
-        raise HTTPException(status_code=500, detail="Falha ao codificar imagem")
+        # Adiciona todas as imagens detectadas
+        for idx, r in enumerate(todos_os_rostos):
+            ok, encoded = cv2.imencode(".jpg", r["face"])
+            if ok:
+                zip_file.writestr(f"rosto_{idx}.jpg", encoded.tobytes())
 
-    return StreamingResponse(io.BytesIO(encoded.tobytes()), media_type="image/jpeg")
+    zip_buffer.seek(0)
 
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/x-zip-compressed",
+        headers={"Content-Disposition": "attachment; filename=rostos.zip"}
+    )
 
 
 @router.post("/converter-pdf")

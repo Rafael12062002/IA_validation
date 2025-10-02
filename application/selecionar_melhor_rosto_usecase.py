@@ -49,6 +49,8 @@ class SelecionarMelhorRostoUseCase:
         melhor_score = -1
         melhor_face = None
 
+        todos_os_rostos = []
+        
         # Testa apenas ângulos principais do documento para detectar rosto
         for angulo in range(0, 360, self.step_degrees):
             print(f"[DEBUG] Testando ângulo {angulo}")
@@ -85,9 +87,16 @@ class SelecionarMelhorRostoUseCase:
                 face_roi = cv2.resize(face_roi, (300, 400))
 
                 score = self.alinhador.avaliar(face_roi)
+
+                todos_os_rostos.append({
+                    "face": face_roi,
+                    "score": score,
+                    "angulo": angulo
+                })
+
                 if score > melhor_score:
                     melhor_score = score
                     melhor_face = face_roi.copy()
                     melhor_angulo = angulo
 
-        return melhor_face
+        return melhor_face, todos_os_rostos
